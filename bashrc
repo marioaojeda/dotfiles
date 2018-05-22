@@ -19,15 +19,26 @@ function conditionally_prefix_path {
 
 conditionally_prefix_path /usr/local/bin
 conditionally_prefix_path /usr/local/sbin
-conditionally_prefix_path /usr/local/share/python
 conditionally_prefix_path /usr/local/share/npm/bin
 conditionally_prefix_path /usr/local/mysql/bin
 conditionally_prefix_path /usr/local/heroku/bin
 conditionally_prefix_path /usr/texbin
 conditionally_prefix_path ~/bin
 conditionally_prefix_path ~/bin/private
+conditionally_prefix_path /usr/local/opt/postgresql@9.5/bin
+conditionally_prefix_path /usr/local/opt/postgresql@9.6/bin
+conditionally_prefix_path ~/.nodenv/bin
+conditionally_prefix_path /usr/local/opt/python/libexec/bin
 
-PATH=.:./bin:${PATH}
+if [ `which rbenv 2> /dev/null` ]; then
+  eval "$(rbenv init -)"
+fi
+
+if [ `which nodenv 2> /dev/null` ]; then
+  eval "$(nodenv init -)"
+fi
+
+PATH=.:./bin:./node_modules/.bin:${PATH}
 
 ############################################################
 ## MANPATH
@@ -68,79 +79,20 @@ CDPATH=.:${CDPATH}
 ## General development configurations
 ###########################################################
 
-if [ `which rbenv 2> /dev/null` ]; then
-  eval "$(rbenv init -)"
-fi
-
-if [ -f ~/.nvm/nvm.sh ]; then
-  . ~/.nvm/nvm.sh
-fi
-
 export RBXOPT=-X19
 
 ############################################################
 ## Terminal behavior
 ############################################################
 
-# Change the window title of X terminals
-case $TERM in
-  xterm*|rxvt|Eterm|eterm)
-    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\007"'
-    ;;
-  screen)
-    PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\033\\"'
-    ;;
-esac
-
-# Show the git branch and dirty state in the prompt.
-# Borrowed from: http://henrik.nyh.se/2008/12/git-dirty-prompt
-function parse_git_dirty {
-  [[ $(git status 2> /dev/null | tail -n1) != "nothing to commit, working directory clean" ]] && echo "*"
-}
-function parse_git_branch {
-  git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/\1$(parse_git_dirty)/"
-}
-
-if [ `which git 2> /dev/null` ]; then
-  function git_prompt {
-    parse_git_branch
-  }
-else
-  function git_prompt {
-    echo ""
-  }
+if [ -f ~/.bash_powerline ]; then
+  . ~/.bash_powerline
 fi
 
-if [ `which rbenv 2> /dev/null` ]; then
-  function ruby_prompt {
-    echo $(rbenv version-name)
-  }
-elif [ `which ruby 2> /dev/null` ]; then
-  function ruby_prompt {
-    echo $(ruby --version | cut -d' ' -f2)
-  }
-else
-  function ruby_prompt {
-    echo ""
-  }
-fi
+# if [ -n "$BASH" ]; then
+#   export PS1='\[\033[32m\]\n[\s: \w] (⬥ $(ruby_prompt)) (⬢ $(node_prompt)) $(git_prompt)\n\[\033[31m\][\u@\h]\$ \[\033[00m\]'
+# fi
 
-if [ `which rbenv-gemset 2> /dev/null` ]; then
-  function gemset_prompt {
-    local gemset=$(rbenv gemset active 2> /dev/null)
-    if [ $gemset ]; then
-      echo " ${gemset}"
-    fi
-  }
-else
-  function gemset_prompt {
-    echo ""
-  }
-fi
-
-if [ -n "$BASH" ]; then
-  export PS1='\[\033[32m\]\n[\s: \w] ($(ruby_prompt)$(gemset_prompt)) $(git_prompt)\n\[\033[31m\][\u@\h]\$ \[\033[00m\]'
-fi
 
 ############################################################
 ## Optional shell behavior
@@ -151,7 +103,7 @@ shopt -s extglob
 shopt -s checkwinsize
 
 export PAGER="less"
-export EDITOR="emacsclient"
+export EDITOR="emacsclient -nw"
 
 ############################################################
 ## History
@@ -167,6 +119,7 @@ export HISTIGNORE="&:pwd:ls:ll:lal:[bf]g:exit:rm*:sudo rm*"
 export HISTCONTROL=erasedups
 # increase the default size from only 1,000 items
 export HISTSIZE=10000
+export HISTFILESIZE=1000000
 
 ############################################################
 ## Aliases
@@ -186,7 +139,7 @@ elif  [ -f /etc/bash_completion ]; then
   . /etc/bash_completion
 elif  [ -f /etc/profile.d/bash_completion ]; then
   . /etc/profile.d/bash_completion
-elif [ -e ~/.bash_completion ]; then
+elif [ -f ~/.bash_completion ]; then
   # Fallback. This should be sourced by the above scripts.
   . ~/.bash_completion
 fi
@@ -200,10 +153,16 @@ if [[ "$USER" == '' ]]; then
   USER=$USERNAME
 fi
 
+# Make sure this appears even after rbenv, git-prompt and other shell extensions
+# that manipulate the prompt.
+if [ `which direnv 2> /dev/null` ]; then
+  eval "$(direnv hook bash)"
+fi
+
 ############################################################
 ## Ruby Performance Boost (see https://gist.github.com/1688857)
 ############################################################
 
-export RUBY_GC_MALLOC_LIMIT=60000000
-# export RUBY_FREE_MIN=200000 # Ruby <= 2.0
-export RUBY_GC_HEAP_FREE_SLOTS=200000 # Ruby >= 2.1
+# export RUBY_GC_MALLOC_LIMIT=60000000
+# # export RUBY_FREE_MIN=200000 # Ruby <= 2.0
+# export RUBY_GC_HEAP_FREE_SLOTS=200000 # Ruby >= 2.1

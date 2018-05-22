@@ -21,7 +21,6 @@
 
 ;; Refresh-like
 (global-set-key [(f5)]         'revert-buffer)
-(global-set-key [(control f5)] 'revbufs)
 
 ;; Query Replace
 (global-set-key [(f6)]         'query-replace)
@@ -36,7 +35,6 @@
 ;; Version control and change related
 (global-set-key [(control f9)] 'magit-status)
 (global-set-key [(f9)]         'magit-status)
-(global-set-key [(meta f9)]    'autotest-switch)  ;; Move to ruby/rails mode?
 
 ;; map the window manipulation keys to meta 0, 1, 2, o
 (global-set-key (kbd "M-3") 'split-window-horizontally) ; was digit-argument
@@ -72,7 +70,6 @@
 
 ;; Easy inserts
 (global-set-key (kbd "C-.") 'insert-arrow)
-(global-set-key (kbd "C-;") 'ruby-hash-converter)
 
 ;; ibuffer > list-buffers
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -97,6 +94,9 @@
 (global-set-key [remap goto-line] 'goto-line-with-feedback)
 
 (global-set-key (kbd "s-\\") 'fixup-whitespace)
+
+;; Utility bindings
+(global-set-key (kbd "C-c +") 'increment-number-at-point)
 
 ;; Help teach to unlearn the arrow keys
 (global-unset-key (kbd "<left>"))

@@ -31,15 +31,16 @@ alias ax="chmod a+x"
 ## List
 ############################################################
 
+# for Mac (good for dark backgrounds)
+export LSCOLORS=gxfxcxdxbxegedabagacad
+# for non-Mac and `tree` command (good for dark backgrounds)
+# For LS_COLORS template: $ dircolors /etc/DIR_COLORS
+export LS_COLORS='no=00:fi=00:di=00;36:ln=00;35:pi=40;33:so=01;35:bd=40;33;01:cd=40;33;01:or=01;05;37;41:mi=01;05;37;41:ex=00;31:'
+
 if [[ `uname` == 'Darwin' ]]; then
   alias ls="ls -G"
-  # good for dark backgrounds
-  export LSCOLORS=gxfxcxdxbxegedabagacad
 else
   alias ls="ls --color=auto"
-  # good for dark backgrounds
-  export LS_COLORS='no=00:fi=00:di=00;36:ln=00;35:pi=40;33:so=01;35:bd=40;33;01:cd=40;33;01:or=01;05;37;41:mi=01;05;37;41:ex=00;31:'
-  # For LS_COLORS template: $ dircolors /etc/DIR_COLORS
 fi
 
 alias l="ls"
@@ -52,7 +53,7 @@ alias lal="ls -alh"
 ############################################################
 
 alias g="git"
-alias gb="git branch -a -v"
+alias gb="tput rmam; git branch -a -v; tput smam"
 alias gc="git commit -v"
 alias gca="git commit -v -a"
 alias gd="git diff"
@@ -73,7 +74,10 @@ alias gi="git config branch.master.remote 'origin'; git config branch.master.mer
 if [ `which hub 2> /dev/null` ]; then
   alias git="hub"
 fi
-alias git-churn="git log --pretty="format:" --name-only | grep -vE '^(vendor/|$)' | sort | uniq -c | sort"
+alias gchurn="git log --pretty="format:" --name-only | grep -vE '^(vendor/|$)' | sort | uniq -c | sort"
+alias gcherry="git log --left-right --graph --cherry-pick --oneline" # master...feature
+
+alias ggemfilelock="git checkout HEAD -- Gemfile.lock && bundle install"
 
 function gsd {
   target=${1%/}
@@ -182,6 +186,20 @@ function gemdoc {
 
 alias rhash="rbenv rehash"
 
+function update-rubygems {
+  cyan=`tput setaf 6`
+  reset=`tput sgr0`
+  for version in `rbenv whence gem`; do
+    rbenv shell "$version"
+    echo
+    echo "${cyan}Updating rubygems for ${version}${reset}"
+    gem update --system --quiet
+    echo
+    echo "${cyan}Updating bundler for ${version}${reset}"
+    gem update bundler --quiet
+  done
+}
+
 ############################################################
 ## Bundler
 ############################################################
@@ -193,16 +211,57 @@ function ignore_vendor_ruby {
 }
 
 alias b="bundle"
-alias bi="b install --path vendor"
-alias bil="bi --local"
 alias bu="b update"
 alias be="b exec"
 alias binit="bi && bundle package"
+alias ba="bundle-audit update && bundle-audit"
+
+# This relies on a global config to force a `--path vendor` whenever `bundle
+# install` is executed.
+# ----------
+# Bundler v1: Be sure to install https://github.com/rmm5t/rbenv-bundle-path-fix
+# Bundler v2: Be sure to first run: `bundle config --global path vendor`
+function bi {
+  if [ -f ./vendor/cache ]; then
+    b install --local $*
+  else
+    b install $*
+  fi
+}
 
 ############################################################
 ## Middleman
 ############################################################
 alias m="be middleman"
+
+############################################################
+## NPM/Yarn
+############################################################
+
+alias y="yarn"
+alias yi="yarn install"
+alias yu="yarn upgrade"
+alias yinit="echo -e \"yarn-offline-mirror \\\"./node_cache\\\"\\nyarn-offline-mirror-pruning true\" >> ./.yarnrc; yi"
+
+############################################################
+## Docker
+############################################################
+
+alias d="docker"
+alias dc="docker-compose"
+alias dcr="dc run"
+alias docker_rm_all='docker rm $(docker ps -a -q)'
+alias dr="docker run -it --rm"
+
+############################################################
+## AWS Stuff
+############################################################
+
+alias dynamodb-start="docker run -d -p 8000:8000 -v ~/.dynamodb/data:/var/dynamodb_data --name dynamodb --restart always ryanratcliff/dynamodb"
+alias dynamodb-stop="docker stop dynamodb"
+
+alias postgis-start="docker run -d -p 5433:5432 -v ~/.postgis/data:/var/lib/postgresql/data --name postgis -e POSTGRES_PASSWORD=postgres --restart always mdillon/postgis"
+alias postgis-stop="docker stop postgis"
 
 ############################################################
 ## Heroku
@@ -232,24 +291,19 @@ alias deploy_hstaging='hstaging maintenance:on && git push staging && hstaging r
 ############################################################
 
 alias tl="tail -f log/development.log"
-
-# Rails 2
-alias ss="script/server"
-alias sg="script/generate"
-alias sc="script/console"
-
-# Rails 3
-alias sr="script/rails"
-alias src="sr console"
+alias ss="spring stop"
 
 # Rails 3 or 4
 function r {
   if [ -e "script/rails" ]; then
     script/rails $*
   else
-    rails $* # Assumes rbenv-binstubs
+    rails $* # Assumes ./bin is in the PATH
   fi
 }
+
+# Pow / Powder
+alias p="powder"
 
 ############################################################
 ## MongoDB
@@ -275,42 +329,36 @@ function ogg2mp3 {
 ## Emacs
 ############################################################
 
-alias e='emacsclient'
-alias install_emacs='brew install emacs --srgb --with-cocoa'
-alias install_emacs_head='brew install bazaar && brew install emacs --HEAD --srgb --with-cocoa'
-alias link_emacs='ln -snf /usr/local/Cellar/emacs/24.5/bin/emacs /usr/local/bin/emacs && ln -snf /usr/local/Cellar/emacs/24.5/bin/emacsclient /usr/local/bin/emacsclient && brew linkapps emacs'
-alias link_emacs_head='ln -snf /usr/local/Cellar/emacs/HEAD/bin/emacs /usr/local/bin/emacs && ln -snf /usr/local/Cellar/emacs/HEAD/bin/emacsclient /usr/local/bin/emacsclient && brew linkapps emacs'
-alias upgrade_emacs='brew uninstall emacs && install_emacs && link_emacs'
-alias upgrade_emacs_head='brew uninstall emacs && install_emacs_head && link_emacs_head'
+alias e="emacsclient -nw"
 
 ############################################################
 ## Miscellaneous
 ############################################################
 
-alias install_ffmpeg='brew install ffmpeg --with-libvorbis --with-theora --with-fdk-aac --with-tools'
+alias install_ffmpeg='brew install ffmpeg --with-libvorbis --with-theora --with-fdk-aac --with-faac --with-tools'
 
 export GREP_COLOR="1;37;41"
 alias grep="grep --color=auto"
 alias wgeto="wget -q -O -"
+if ! [ `which md5 2> /dev/null` ]; then
+  alias md5="openssl dgst -md5"
+fi
 alias sha1="openssl dgst -sha1"
-alias sha2="openssl dgst -sha256"
+alias sha2="openssl dgst -sha256" # shortcut
+alias sha256="openssl dgst -sha256"
 alias sha512="openssl dgst -sha512"
 alias b64="openssl enc -base64"
 alias 256color="export TERM=xterm-256color"
 alias prettyjson="python -mjson.tool"
+alias dig="dig +noall +answer"
 
-function flushdns {
-  if pgrep mDNSResponder > /dev/null
-  then # OS X <= 10.9
-    dscacheutil -flushcache
-  else # OS X >= 10.10
-    sudo discoveryutil udnsflushcaches
-  fi
-}
+alias flushdns="sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder"
 
 alias whichlinux='uname -a; cat /etc/*release; cat /etc/issue'
 
 alias myip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias myip4="curl -s4 http://icanhazip.com/"
+alias mylocation="curl -s4 http://ip-api.com/json | prettyjson"
 
 function serve {
   local port=$1
@@ -331,6 +379,25 @@ function fakefile {
   let mb=$1
   let bytes=mb*1048576
   dd if=/dev/random of=${mb}MB-fakefile bs=${bytes} count=1 &> /dev/null
+}
+
+function color() {
+  for c; do
+    tput setab $c
+    printf ' %03d ' $c
+  done
+  tput sgr0
+  echo
+}
+
+function colors() {
+  x=6
+  y=40
+  color {0..7}
+  color {8..15}
+  for ((i=0; i<$y; i++)); do
+    color $(seq $((i*$x+16)) $((i*$x+$x-1+16)))
+  done
 }
 
 ############################################################

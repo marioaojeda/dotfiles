@@ -1,3 +1,11 @@
+# ~/.gitconfig_local template
+#
+# [user]
+#   email =
+#   name =
+# [github]
+#   user =
+
 [include]
   path = ~/.gitconfig_local
 [alias]
@@ -20,10 +28,9 @@
   summary = true
 [push]
   default = upstream
-[remote "origin"]
-  push = HEAD
 [diff]
   ignoresubmodules = untracked
+  compactionHeuristic = true
 [core]
   excludesfile = ~/.gitignore
 [heroku]
@@ -32,3 +39,7 @@
   rebase = true
 [fetch]
   prune = true
+[submodule]
+	fetchJobs = 4
+[gpg]
+	program = gpg1

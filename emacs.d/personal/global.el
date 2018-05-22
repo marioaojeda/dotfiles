@@ -23,8 +23,8 @@
 (display-time-mode 1)
 ;; (display-battery-mode 1)
 
-;; Small fringes
-(set-fringe-mode '(1 . 1))
+;; Change fringe
+(set-fringe-mode '(nil . 0))
 
 ;; Emacs gurus don't need no stinking scroll bars
 (when (fboundp 'toggle-scroll-bar)
@@ -54,6 +54,7 @@
 
 ;; Trailing whitespace is unnecessary
 (defvar whitespace-cleanup-on-save t)
+;; (setq whitespace-cleanup-on-save t)
 ;; (setq whitespace-cleanup-on-save nil)
 (add-hook 'before-save-hook
           (lambda ()

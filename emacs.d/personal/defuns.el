@@ -41,11 +41,14 @@
   (insert (buffer-file-name (window-buffer (minibuffer-selected-window)))))
 
 ;; Quickly jump back and forth between matching parens/brackets
-(defun match-paren (arg)
-  "Go to the matching parenthesis if on parenthesis."
-  (interactive "p")
-  (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-        ((looking-at "\\s\)") (forward-char 1) (backward-list 1))))
+(defun match-paren (&optional arg)
+  "Go to the matching parenthesis character if one is adjacent to point."
+  (interactive "^p")
+  (cond ((looking-at "\\s(") (forward-sexp arg))
+        ((looking-back "\\s)" 1) (backward-sexp arg))
+        ;; Now, try to succeed from inside of a bracket
+        ((looking-at "\\s)") (forward-char) (backward-sexp arg))
+        ((looking-back "\\s(" 1) (backward-char) (forward-sexp arg))))
 
 ;; Make the whole buffer pretty and consistent
 (defun iwb()
@@ -71,6 +74,10 @@ kill all other visible buffers."
         (unless (equal (window-buffer window) (current-buffer))
           (kill-buffer (window-buffer window)))))
   (delete-other-windows))
+
+(defun lorem ()
+  (interactive)
+  (insert "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Praesent libero orci, auctor sed, faucibus vestibulum, gravida vitae, arcu. Nunc posuere. Suspendisse potenti. Praesent in arcu ac nisl ultricies ultricies. Fusce eros. Sed pulvinar vehicula ante. Maecenas urna dolor, egestas vel, tristique et, porta eu, leo. Curabitur vitae sem eget arcu laoreet vulputate. Cras orci neque, faucibus et, rhoncus ac, venenatis ac, magna. Aenean eu lacus. Aliquam luctus facilisis augue. Nullam fringilla consectetuer sapien. Aenean neque augue, bibendum a, feugiat id, lobortis vel, nunc. Suspendisse in nibh quis erat condimentum pretium. Vestibulum tempor odio et leo. Sed sodales vestibulum justo. Cras convallis pellentesque augue. In eu magna. In pede turpis, feugiat pulvinar, sodales eget, bibendum consectetuer, magna. Pellentesque vitae augue."))
 
 ;; ;; Use the text around point as a cue what it is that we want from the
 ;; ;; editor. Allowance has to be made for the case that point is at the
@@ -106,7 +113,6 @@ point and around or after mark are interchanged."
 
 ;; Borrowed from https://gist.github.com/1415844
 ;; Also see http://emacsworld.blogspot.com/2011/12/moving-buffers-between-windows.html
-(require 'cl)
 (defun rotate-left (l)
   (append  (cdr l) (list (car l))))
 (defun rotate-windows ()
@@ -145,3 +151,11 @@ point and around or after mark are interchanged."
   (interactive)
   (yank)
   (replace-smart-quotes (mark) (point)))
+
+;; Borrowed from https://www.emacswiki.org/emacs/IncrementNumber
+(defun increment-number-at-point ()
+  (interactive)
+  (skip-chars-backward "0-9")
+  (or (looking-at "[0-9]+")
+      (error "No number at point"))
+  (replace-match (number-to-string (1+ (string-to-number (match-string 0))))))
